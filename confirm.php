@@ -146,8 +146,9 @@ if ($mform->is_cancelled()) {
             $SESSION->timeout = get_config('auth_twofactor', 'timeout');
             $SESSION->lastactivity = time();
 
-            // Unset attempts when the time starts counting.
+            // Unset attempts and mustattempt when the time starts counting.
             $SESSION->attempts = null;
+            $SESSION->mustattempt = null;
 
             // Debug.
             var_dump($SESSION->timeout); echo "<br>";
@@ -206,6 +207,7 @@ if ($mform->is_cancelled()) {
     // Let's carry over the messageid, to be able to redirect them to the confirm page
     // so they can continue using the code that was deliver to their phone to attempt.
     $SESSION->mid         = $messageid;
+    $SESSION->ver         = $code;
 
     print_object($SESSION);
 

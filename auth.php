@@ -95,15 +95,18 @@ class auth_plugin_twofactor extends auth_plugin_base {
             $randomcode = substr(str_shuffle(str_repeat('0123456789',5)),0,6);
 
             // Send the random code to the user's phone.
-            $message = $this->send_code_to_user($randomcode);
-            print_object($message);
+            $message    = $this->send_code_to_user($randomcode);
+            $encode     = base64_encode($message->body); // THIS SHOULD BE DELETED
 
-
-            $encode = base64_encode($message->body);
-            $u      = base64_encode(json_encode($user));
+            // Send the user data, so we can authenticate it from the confirm page.
+            $u          = base64_encode(json_encode($user));
             $confirmurl = new moodle_url(
                 '/auth/twofactor/confirm.php',
-                array('ver' => $encode, 'mid' => $message->getId(), 'u' => $u)
+                array(
+                    'ver' => $encode, // THIS SHOULD BE DELETED.
+                    'mid' => $message->getId(),
+                    'u' => $u
+                )
             );
 
             redirect($confirmurl);
@@ -116,12 +119,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         global $SESSION;
 
-        print_object($SESSION);
+        // print_object($SESSION);
 
-        // if (isset($SESSION->mustattempt)) {
-        //     $url = new moodle_url('/auth/twofactor/confirm.php', array('mid' => $SESSION['mid']));
-        //     redirect($url);
-        // }
+        if (isset($SESSION->mustattempt)) {
+            $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
+            $url = new moodle_url('/auth/twofactor/confirm.php', $params);
+            redirect($url);
+        }
 
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
@@ -134,12 +138,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         global $SESSION;
 
-        print_object($SESSION);
+        // print_object($SESSION);
 
-        // if (isset($SESSION->mustattempt)) {
-        //     $url = new moodle_url('/auth/twofactor/confirm.php', array('mid' => $SESSION['mid']));
-        //     redirect($url);
-        // }
+        if (isset($SESSION->mustattempt)) {
+            $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
+            $url = new moodle_url('/auth/twofactor/confirm.php', $params);
+            redirect($url);
+        }
 
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
