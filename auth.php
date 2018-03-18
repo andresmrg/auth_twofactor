@@ -115,7 +115,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
             $confirmurl = new moodle_url(
                 $confirmpage,
                 array(
-                    'ver' => $encode, // THIS SHOULD BE DELETED.
+                    // 'ver' => $encode, // THIS SHOULD BE DELETED.
                     'mid' => $message->getId(),
                     'u' => $u
                 )
@@ -137,13 +137,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
-            // redirect($url);
+            redirect($url);
         }
 
         // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
-            // redirect($url);
+            redirect($url);
         }
 
     }

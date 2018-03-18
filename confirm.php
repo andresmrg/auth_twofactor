@@ -40,7 +40,7 @@ $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = optional_param('u', "", PARAM_NOTAGS);
 $needphone = optional_param('phone', 0, PARAM_INT);
 
-var_dump(base64_decode($code));
+// var_dump(base64_decode($code));
 
 global $DB, $OUTPUT, $PAGE, $USER, $CFG, $SESSION;
 
@@ -92,13 +92,33 @@ if ($mform->is_cancelled()) {
 } else if ($fromform = $mform->get_data()) {
 
     if (!empty($fromform->phonenumber)) {
-
         update_user_phone($fromform->phonenumber, $fromform->u);
         die();
     }
 
+    // Get the message content.
+    $MessageBird = new \MessageBird\Client($accesskey);
+
+    try {
+        $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
+    } catch (\MessageBird\Exceptions\AuthenticateException $e) {
+        // That means that your accessKey is unknown
+        echo get_string('wronglogin', 'auth_twofactor');
+    } catch (\Exception $e) {
+        var_dump($e->getMessage());
+    }
+
     // Validate against the message code, if this is true, redirect.
-    if (base64_decode($fromform->ver) == $fromform->code) {
+    if ($MessageResult->body == $fromform->code) {
+
+        echo "came here";
+        die();
+        redirect($CFG->wwwroot);
+    }
+
+    // Validate against the message code, if this is true, redirect.
+    // if (base64_decode($fromform->ver) == $fromform->code) {
+    if ($MessageResult->body == $fromform->code) {
 
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
@@ -129,7 +149,7 @@ if ($mform->is_cancelled()) {
         // The user has until X attempts to submit the form, before the timeout start counting.
         // He already did the first attempt so we must decrease the attempts.
         $attempts = !empty($SESSION->attempts) ? --$SESSION->attempts : $fromform->attempts;
-        var_dump($attempts);
+        // var_dump($attempts);
 
         if ($attempts !== 0) {
 
@@ -156,8 +176,8 @@ if ($mform->is_cancelled()) {
             $SESSION->mustattempt = null;
 
             // Debug.
-            var_dump($SESSION->timeout); echo "<br>";
-            var_dump(date( 'm', $SESSION->lastactivity));
+            // var_dump($SESSION->timeout); echo "<br>";
+            // var_dump(date( 'm', $SESSION->lastactivity));
 
             echo $OUTPUT->header();
             echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
@@ -169,26 +189,6 @@ if ($mform->is_cancelled()) {
             die();
 
         }
-
-        // Get the message content.
-        // $MessageBird = new \MessageBird\Client($accesskey);
-
-        // try {
-        //     $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
-        //     var_dump($MessageResult);
-        // } catch (\MessageBird\Exceptions\AuthenticateException $e) {
-        //     // That means that your accessKey is unknown
-        //     echo 'wrong login';
-        // } catch (\Exception $e) {
-        //     var_dump($e->getMessage());
-        // }
-        // $MessageBird->messages->read($messageid);
-        // print_object($MessageBird);
-
-        // // Validate against the message code, if this is true, redirect.
-        // if ($MessageBird->body == $fromform->code) {
-            // redirect($CFG->wwwroot);
-        // }
 
     }
 
@@ -213,8 +213,6 @@ if ($mform->is_cancelled()) {
     // so they can continue using the code that was deliver to their phone to attempt.
     $SESSION->mid         = $messageid;
     $SESSION->ver         = $code;
-
-    // print_object($SESSION);
 
     echo $OUTPUT->header();
 
@@ -248,13 +246,11 @@ function update_user_phone($phone, $user) {
 
     global $DB, $CFG;
 
-    $user = json_decode(base64_decode($user));
-    print_object($user);
-
-    $user->phone1 = $phone;
+    $user           = json_decode(base64_decode($user));
+    $user->phone1   = $phone;
 
     if (!$DB->update_record('user', $user)) {
-        echo 'The phone number could not be udpated';
+        echo get_string('phonenotupdated', 'auth_twofactor');
         die();
     }
 

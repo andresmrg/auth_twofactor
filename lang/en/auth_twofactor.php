@@ -39,6 +39,8 @@ $string['noattemptsleft'] = 'You have reached the maximum number of attempts. Pl
 $string['verification_page'] = 'Verification Page.';
 $string['phone'] = 'Phone Number';
 $string['phone_example'] = 'e.g. +313453039499';
+$string['wronglogin'] = 'Something wrong happened. Please report to an administrator if you see this message.';
+$string['phonenotupdated'] = 'Ups! Your cellphone number could not be updated. Please try again or contact an administrator.';
 
 $string['auth_twofactor_ip_range'] = 'IP Range';
 $string['auth_twofactor_ip_range_desc'] = 'Put the range of IPs accepted to login. If the user is not within this range, a message with a code will be sent to his phone number.';

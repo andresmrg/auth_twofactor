@@ -75,10 +75,6 @@ class confirm_form extends moodleform {
                 $data->phonenumber = $mform->_submitValues['phonenumber'];
             }
 
-            // if(!empty($mform->_submitValues['u'])) {
-            //     $data->u = $mform->_submitValues['u'];
-            // }
-
         }
 
         return $data;

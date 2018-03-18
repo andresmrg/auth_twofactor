@@ -36,9 +36,9 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtext('auth_twofactor/accesskey', get_string('auth_twofactor_accesskey', 'auth_twofactor'),
             get_string('auth_twofactor_accesskey_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
 
-    // Access key.
+    // Originator.
     $settings->add(new admin_setting_configtext('auth_twofactor/sender', get_string('auth_twofactor_sender', 'auth_twofactor'),
-            get_string('auth_twofactor_sender_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
+            get_string('auth_twofactor_sender_desc', 'auth_twofactor'), '', PARAM_RAW));
 
     // IP Range.
     $settings->add(new admin_setting_configtext('auth_twofactor/iprange', get_string('auth_twofactor_ip_range', 'auth_twofactor'),
