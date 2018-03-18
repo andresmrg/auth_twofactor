@@ -18,12 +18,12 @@
  * Two Factor authentication plugin version information
  *
  * @package    auth_twofactor
- * @copyright  2011 Petr Skoda (http://skodak.org)
+ * @copyright  2018 Andres Ramos (https://www.lmsdoctor.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2017051500;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017050500;        // Requires this Moodle version
+$plugin->requires  = 2016120505;        // Requires this Moodle version
 $plugin->component = 'auth_twofactor';     // Full name of the plugin (used for diagnostics)

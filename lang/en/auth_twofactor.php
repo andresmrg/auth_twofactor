@@ -32,10 +32,13 @@ $string['passwdexpiretime_desc'] = 'Length of time for which a password is valid
 $string['pluginname'] = 'Two Factor Authentication';
 $string['passwdexpire_settings'] = 'Password expiry settings';
 $string['enter_verification'] = 'A verification code was sent to your phone, please enter the code here to continue.';
+$string['enter_phone'] = 'Your phone number is required in your profile.';
 $string['verificationcode'] = 'Enter Verification Code';
 $string['incorrectcode'] = 'The verification code is not correct, you have {$a} attempts left.';
 $string['noattemptsleft'] = 'You have reached the maximum number of attempts. Please try to login again in {$a}.';
 $string['verification_page'] = 'Verification Page.';
+$string['phone'] = 'Phone Number';
+$string['phone_example'] = 'e.g. +313453039499';
 
 $string['auth_twofactor_ip_range'] = 'IP Range';
 $string['auth_twofactor_ip_range_desc'] = 'Put the range of IPs accepted to login. If the user is not within this range, a message with a code will be sent to his phone number.';

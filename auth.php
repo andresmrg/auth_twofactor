@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/authlib.php');
+require_once("$CFG->dirroot/user/profile/lib.php");
 
 /**
  * Two Factor authentication plugin.
@@ -75,7 +76,6 @@ class auth_plugin_twofactor extends auth_plugin_base {
     }
 
     function user_authenticated_hook(&$user, $username, $password) {
-        global $USER;
 
         // Get config values.
         $iprange        = get_config('auth_twofactor', 'iprange');
@@ -88,6 +88,18 @@ class auth_plugin_twofactor extends auth_plugin_base {
         $highip         = ip2long($iprangelist[1]);
         $ip             = ip2long($this->get_real_ip_address());
 
+        $u              = base64_encode(json_encode($user));
+
+        // Confirm page.
+        $confirmpage = '/auth/twofactor/confirm.php';
+
+        // Validate if the user has any phone number, otherwise the user must add it.
+        $emptyphone = (empty($user->phone1) && empty($user->phone2) && !is_siteadmin());
+        if ($emptyphone) {
+            $urltogo = new moodle_url($confirmpage, array('phone' => 1, 'u' => $u));
+            redirect($urltogo);
+        }
+
         // Validate ip range.
         if (!($ip <= $highip && $lowip <= $ip)) {
 
@@ -95,13 +107,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
             $randomcode = substr(str_shuffle(str_repeat('0123456789',5)),0,6);
 
             // Send the random code to the user's phone.
-            $message    = $this->send_code_to_user($randomcode);
+            $message    = $this->send_code_to_user($randomcode, $user);
             $encode     = base64_encode($message->body); // THIS SHOULD BE DELETED
 
             // Send the user data, so we can authenticate it from the confirm page.
             $u          = base64_encode(json_encode($user));
             $confirmurl = new moodle_url(
-                '/auth/twofactor/confirm.php',
+                $confirmpage,
                 array(
                     'ver' => $encode, // THIS SHOULD BE DELETED.
                     'mid' => $message->getId(),
@@ -125,13 +137,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
-            redirect($url);
+            // redirect($url);
         }
 
         // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
-            redirect($url);
+            // redirect($url);
         }
 
     }
@@ -146,13 +158,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
-            redirect($url);
+            // redirect($url);
         }
 
         // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
-            redirect($url);
+            // redirect($url);
         }
 
     }
@@ -163,17 +175,19 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param  int    $randomcode
      * @return mixed               Returns object if the message was deliver, false otherwise.
      */
-    function send_code_to_user($randomcode) {
+    function send_code_to_user($randomcode, $user) {
 
         require 'vendor/autoload.php';
 
+        // Try one of the phone numbers from their profile.
+        $phonenumber            = (!empty($user->phone1)) ? $user->phone1 : $user->phone2;
         $accesskey              = get_config('auth_twofactor', 'accesskey');
         $sender                 = get_config('auth_twofactor', 'sender');
 
         $MessageBird            = new \MessageBird\Client($accesskey);
         $Message                = new \MessageBird\Objects\Message();
         $Message->originator    = $sender;
-        $Message->recipients    = array('+573113636619');
+        $Message->recipients    = array($phonenumber);
         $Message->body          = $randomcode;
         $result                 = $MessageBird->messages->create($Message);
 

@@ -33,6 +33,8 @@ class confirm_form extends moodleform {
 
         $mform = & $this->_form;
 
+        $needphone = optional_param('phone', 0, PARAM_INT);
+
         // Hidden fields
         $mform->addElement('hidden', 'ver');
         $mform->setType('ver', PARAM_NOTAGS);
@@ -46,12 +48,40 @@ class confirm_form extends moodleform {
         $mform->addElement('hidden', 'attempts');
         $mform->setType('attempts', PARAM_INT);
 
-        // Textarea for confirmlation message.
-        $mform->addElement('text','code', get_string('verificationcode', 'auth_twofactor'));
-        $mform->setType('code', PARAM_NOTAGS);
+        if (empty($needphone)) {
+            // Input for confirmation message.
+            $mform->addElement('text','code', get_string('verificationcode', 'auth_twofactor'));
+            $mform->setType('code', PARAM_NOTAGS);
+        } else {
+            // Input to add the phone number.
+            $conditions = array('placeholder' => get_string('phone_example', 'auth_twofactor'));
+            $mform->addElement('text','phonenumber', get_string('phone', 'auth_twofactor'), $conditions);
+            $mform->setType('phonenumber', PARAM_RAW);
+        }
 
         // Action buttons.
         $this->add_action_buttons(true, get_string('confirm'));
+    }
+
+    function get_data(){
+        global $DB;
+
+        $data = parent::get_data();
+
+        if (!empty($data)) {
+            $mform =& $this->_form;
+
+            if(!empty($mform->_submitValues['phonenumber'])) {
+                $data->phonenumber = $mform->_submitValues['phonenumber'];
+            }
+
+            // if(!empty($mform->_submitValues['u'])) {
+            //     $data->u = $mform->_submitValues['u'];
+            // }
+
+        }
+
+        return $data;
     }
 
 }

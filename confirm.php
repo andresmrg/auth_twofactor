@@ -32,13 +32,13 @@ require 'vendor/autoload.php';
 $CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
 $CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
 
-
 // Get url params.
 $accesskey = get_config('auth_twofactor', 'accesskey');
 $code      = optional_param('ver', 0, PARAM_NOTAGS);
 $messageid = optional_param('mid', 0, PARAM_NOTAGS);
 $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = optional_param('u', "", PARAM_NOTAGS);
+$needphone = optional_param('phone', 0, PARAM_INT);
 
 var_dump(base64_decode($code));
 
@@ -91,6 +91,12 @@ if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot);
 } else if ($fromform = $mform->get_data()) {
 
+    if (!empty($fromform->phonenumber)) {
+
+        update_user_phone($fromform->phonenumber, $fromform->u);
+        die();
+    }
+
     // Validate against the message code, if this is true, redirect.
     if (base64_decode($fromform->ver) == $fromform->code) {
 
@@ -122,7 +128,6 @@ if ($mform->is_cancelled()) {
 
         // The user has until X attempts to submit the form, before the timeout start counting.
         // He already did the first attempt so we must decrease the attempts.
-        print_object($fromform);
         $attempts = !empty($SESSION->attempts) ? --$SESSION->attempts : $fromform->attempts;
         var_dump($attempts);
 
@@ -189,7 +194,7 @@ if ($mform->is_cancelled()) {
 
 } else {
 
-    if (empty($messageid)) {
+    if (empty($messageid) && empty($needphone)) {
         redirect($CFG->wwwroot);
         die();
     }
@@ -209,10 +214,17 @@ if ($mform->is_cancelled()) {
     $SESSION->mid         = $messageid;
     $SESSION->ver         = $code;
 
-    print_object($SESSION);
+    // print_object($SESSION);
 
     echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
+
+    // Output is different for the phone and the verification code.
+    if (!empty($needphone)) {
+        $headingoutput = $OUTPUT->heading(get_string('enter_phone', 'auth_twofactor'));
+    } else {
+        $headingoutput = $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
+    }
+    echo $headingoutput;
     echo html_writer::start_tag('br');
     echo html_writer::start_tag('br');
 
@@ -222,6 +234,31 @@ if ($mform->is_cancelled()) {
     $mform->display();
     echo $OUTPUT->footer();
     die();
+
+}
+
+/**
+ * Update the user's phone number, and redirect to the main page again.
+ *
+ * @param  int    $phone
+ * @param  string $user    User data comes enconded by default.
+ * @return void
+ */
+function update_user_phone($phone, $user) {
+
+    global $DB, $CFG;
+
+    $user = json_decode(base64_decode($user));
+    print_object($user);
+
+    $user->phone1 = $phone;
+
+    if (!$DB->update_record('user', $user)) {
+        echo 'The phone number could not be udpated';
+        die();
+    }
+
+    redirect($CFG->wwwroot);
 
 }
 
