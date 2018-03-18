@@ -119,14 +119,16 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         global $SESSION;
 
-        // print_object($SESSION);
-
+        // If the user needs to be verified, and he attempts to go back, redirect him to
+        // the verification page to make the attempts. It won't redirect if all attempts
+        // are consumed.
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
             redirect($url);
         }
 
+        // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
             redirect($url);
@@ -138,14 +140,16 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         global $SESSION;
 
-        // print_object($SESSION);
-
+        // If the user needs to be verified, and he attempts to go back, redirect him to
+        // the verification page to make the attempts. It won't redirect if all attempts
+        // are consumed.
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
             redirect($url);
         }
 
+        // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
             redirect($url);
@@ -153,6 +157,12 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
     }
 
+    /**
+     * Sends the verification code to the user.
+     *
+     * @param  int    $randomcode
+     * @return mixed               Returns object if the message was deliver, false otherwise.
+     */
     function send_code_to_user($randomcode) {
 
         require 'vendor/autoload.php';
@@ -170,18 +180,5 @@ class auth_plugin_twofactor extends auth_plugin_base {
         return $result;
 
     }
-
-    /**
-     * Save the information into the DB to keep track.
-     *
-     * @param  int $code
-     * @param  int $timeout
-     * @param  int $attempts
-     * @return boolean
-     */
-    function save_code($code, $timeout, $attempts) {
-
-    }
-
 
 }

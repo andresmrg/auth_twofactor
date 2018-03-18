@@ -225,6 +225,12 @@ if ($mform->is_cancelled()) {
 
 }
 
+/**
+ * Format seconds to human readable format ex: x hours, x minutes, x seconds.
+ *
+ * @param  int $seconds
+ * @return string
+ */
 function minutes($seconds) {
     $hours = floor($seconds / 3600);
     $minutes = floor(($seconds / 60) % 60);
