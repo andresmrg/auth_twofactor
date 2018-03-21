@@ -27,10 +27,10 @@ require_once('../../config.php');
 require_once('confirm_form.php');
 require 'vendor/autoload.php';
 
-// @error_reporting(E_ALL | E_STRICT); // NOT FOR PRODUCTION SERVERS!
-// @ini_set('display_errors', '1');    // NOT FOR PRODUCTION SERVERS!
-// $CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
-// $CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
+@error_reporting(E_ALL | E_STRICT); // NOT FOR PRODUCTION SERVERS!
+@ini_set('display_errors', '1');    // NOT FOR PRODUCTION SERVERS!
+$CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
+$CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
 
 // Get url params.
 $accesskey = get_config('auth_twofactor', 'accesskey');
@@ -40,7 +40,7 @@ $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = optional_param('u', "", PARAM_NOTAGS);
 $needphone = optional_param('phone', 0, PARAM_INT);
 
-// var_dump(base64_decode($code));
+$debugcode = ( !empty($code) ) ? base64_decode($code) : "";
 
 global $DB, $OUTPUT, $PAGE, $USER, $CFG, $SESSION;
 
@@ -99,26 +99,18 @@ if ($mform->is_cancelled()) {
     // Get the message content.
     $MessageBird = new \MessageBird\Client($accesskey);
 
-    try {
-        $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
-    } catch (\MessageBird\Exceptions\AuthenticateException $e) {
-        // That means that your accessKey is unknown
-        echo get_string('wronglogin', 'auth_twofactor');
-    } catch (\Exception $e) {
-        var_dump($e->getMessage());
-    }
+    // try {
+    //     $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
+    // } catch (\MessageBird\Exceptions\AuthenticateException $e) {
+    //     // That means that your accessKey is unknown
+    //     echo get_string('wronglogin', 'auth_twofactor');
+    // } catch (\Exception $e) {
+    //     var_dump($e->getMessage());
+    // }
 
     // Validate against the message code, if this is true, redirect.
-    if ($MessageResult->body == $fromform->code) {
-
-        echo "came here";
-        die();
-        redirect($CFG->wwwroot);
-    }
-
-    // Validate against the message code, if this is true, redirect.
-    // if (base64_decode($fromform->ver) == $fromform->code) {
-    if ($MessageResult->body == $fromform->code) {
+    if (base64_decode($fromform->ver) == $fromform->code) {
+    // if ($MessageResult->body == $fromform->code) {
 
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
