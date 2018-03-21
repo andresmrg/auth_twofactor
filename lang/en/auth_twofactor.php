@@ -44,18 +44,15 @@ $string['phonenotupdated'] = 'Ups! Your mobile phone number could not be updated
 $string['phoneupdatesuccess'] = 'Your mobile phone number was updated successfully';
 $string['debug'] = 'Enable debug option';
 $string['debug_desc'] = 'Don\'t enable on Production! This option is to test the verification code feature without sending the code to the user\'s mobile phone. You will be able to see the verification code in the page.';
-
 $string['auth_twofactor_ip_range'] = 'IP Range';
 $string['auth_twofactor_ip_range_desc'] = 'Put the range of IPs allowed to login. If the user is not within this range, a verification code will be sent to his/her mobile phone number through SMS.';
-
 $string['auth_twofactor_timeout'] = 'Timeout in seconds';
 $string['auth_twofactor_timeout_desc'] = 'Specify in seconds how long before the SMS code timeout.';
-
 $string['auth_twofactor_attempts'] = 'Attempts';
 $string['auth_twofactor_attempts_desc'] = 'How many attempts a user can try to login.';
-
 $string['auth_twofactor_accesskey'] = 'Access Key';
 $string['auth_twofactor_accesskey_desc'] = 'The access key from MessageBird is found in your account. You need to access directly to messagebird.com and generate one if you do not have one yet.';
-
 $string['auth_twofactor_sender'] = 'Sender Name';
 $string['auth_twofactor_sender_desc'] = 'Name of the originator of the message.';
+$string['auth_twofactor_sender_desc'] = 'Name of the originator of the message.';
+$string['eventmessage_sent'] = 'SMS Sent';

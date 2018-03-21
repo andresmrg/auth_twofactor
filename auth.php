@@ -136,7 +136,6 @@ class auth_plugin_twofactor extends auth_plugin_base {
             // Send the random code to the user's phone.
             if (!$debug) {
                 $message    = $this->send_code_to_user($randomcode, $user);
-                $encode     = base64_encode($message->body); // THIS SHOULD BE DELETED
                 $urlparams  = array(
                     'mid' => $message->getId(),
                     'u'   => $u
@@ -197,6 +196,16 @@ class auth_plugin_twofactor extends auth_plugin_base {
         $Message->recipients    = array($phonenumber);
         $Message->body          = $randomcode;
         $result                 = $MessageBird->messages->create($Message);
+
+        if (!empty($result)) {
+            $event = \auth_twofactor\event\message_sent::create(array(
+                'objectid'      => $randomcode,
+                'relateduserid' => $user->id,
+                'userid'        => $user->id,
+                'context'       => context_system::instance()
+            ));
+            $event->trigger();
+        }
 
         return $result;
 
