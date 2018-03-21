@@ -52,6 +52,7 @@ class confirm_form extends moodleform {
             // Input for confirmation message.
             $mform->addElement('text','code', get_string('verificationcode', 'auth_twofactor'));
             $mform->setType('code', PARAM_NOTAGS);
+            $mform->addRule('code', get_string('required'), 'required', null,  'server');
         } else {
             // Input to add the phone number.
             $conditions = array('placeholder' => get_string('phone_example', 'auth_twofactor'));
