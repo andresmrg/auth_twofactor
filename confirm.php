@@ -27,20 +27,18 @@ require_once('../../config.php');
 require_once('confirm_form.php');
 require 'vendor/autoload.php';
 
-// @error_reporting(E_ALL | E_STRICT); // NOT FOR PRODUCTION SERVERS!
-// @ini_set('display_errors', '1');    // NOT FOR PRODUCTION SERVERS!
-// $CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
-// $CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
+// Get configs.
+$accesskey = get_config('auth_twofactor', 'accesskey');
+$debug     = get_config('auth_twofactor', 'debug');
 
 // Get url params.
-$accesskey = get_config('auth_twofactor', 'accesskey');
-$code      = optional_param('ver', 0, PARAM_NOTAGS);
-$messageid = optional_param('mid', 0, PARAM_NOTAGS);
+$code      = optional_param('ver', "", PARAM_NOTAGS);
+$messageid = optional_param('mid', "", PARAM_NOTAGS);
 $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = optional_param('u', "", PARAM_NOTAGS);
 $needphone = optional_param('phone', 0, PARAM_INT);
 
-// var_dump(base64_decode($code));
+$debugcode = ( !empty($code) ) ? html_writer::tag('div', base64_decode($code), array("class" => "alert alert-success")) : "";
 
 global $DB, $OUTPUT, $PAGE, $USER, $CFG, $SESSION;
 
@@ -52,32 +50,8 @@ $PAGE->set_url(new moodle_url('/auth/twofactor/confirm.php'));
 $PAGE->set_title(get_string('verificationcode', 'auth_twofactor'));
 $PAGE->set_heading(get_string('verificationcode', 'auth_twofactor'));
 
-if (!empty($istimeout)) {
-
-    // If the timeout expired, destroy the sessions and redirect to the login.
-    // They should be able to try again.
-    $remainingtime = $SESSION->timeout - (time() - $SESSION->lastactivity);
-    if (time() - $SESSION->lastactivity >= $SESSION->timeout) {
-
-        // Unset sessions.
-        $SESSION->lastactivity = null;
-        $SESSION->timeout = null;
-        redirect($CFG->wwwroot);
-        die();
-
-    }
-
-    // Output page.
-    echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('verification_page', 'auth_twofactor'));
-    echo html_writer::start_tag('br');
-    $attributes = array('class' => 'alert alert-warning');
-    echo html_writer::tag('div', get_string('noattemptsleft','auth_twofactor', minutes($remainingtime)), $attributes);
-    echo $OUTPUT->continue_button($CFG->wwwroot);
-    echo $OUTPUT->footer();
-    die();
-
-}
+// If the timeout time passed, then take the user to the home page.
+check_timeout($istimeout);
 
 $mform  = new confirm_form();
 $toform = array(
@@ -93,32 +67,35 @@ if ($mform->is_cancelled()) {
 
     if (!empty($fromform->phonenumber)) {
         update_user_phone($fromform->phonenumber, $fromform->u);
-        die();
     }
 
-    // Get the message content.
-    $MessageBird = new \MessageBird\Client($accesskey);
+    if (!$debug) {
 
-    try {
-        $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
-    } catch (\MessageBird\Exceptions\AuthenticateException $e) {
-        // That means that your accessKey is unknown
-        echo get_string('wronglogin', 'auth_twofactor');
-    } catch (\Exception $e) {
-        var_dump($e->getMessage());
+        // Get the message content.
+        $MessageBird = new \MessageBird\Client($accesskey);
+        $comparison  = false;
+
+        try {
+            $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
+            $comparison = ($MessageResult->body == $fromform->code);
+        } catch (\MessageBird\Exceptions\AuthenticateException $e) {
+            // That means that your accessKey is unknown
+            $attributes = array("class" => "alert alert-warning");
+            echo html_writer::tag('div', get_string('wronglogin','auth_twofactor'), $attributes);
+        } catch (\Exception $e) {
+
+            if ($debug) {
+                var_dump($e->getMessage());
+            }
+
+        }
+
+    } else {
+        $comparison = (base64_decode($fromform->ver) == $fromform->code);
     }
 
     // Validate against the message code, if this is true, redirect.
-    if ($MessageResult->body == $fromform->code) {
-
-        echo "came here";
-        die();
-        redirect($CFG->wwwroot);
-    }
-
-    // Validate against the message code, if this is true, redirect.
-    // if (base64_decode($fromform->ver) == $fromform->code) {
-    if ($MessageResult->body == $fromform->code) {
+    if ($comparison) {
 
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
@@ -156,6 +133,10 @@ if ($mform->is_cancelled()) {
             echo $OUTPUT->header();
             echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
             echo html_writer::start_tag('br');
+
+            // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
+            echo $debugcode;
+
             $attributes = array("class" => "alert alert-warning");
             echo html_writer::tag('div', get_string('incorrectcode','auth_twofactor', $attempts), $attributes);
             echo html_writer::start_tag('br');
@@ -175,13 +156,13 @@ if ($mform->is_cancelled()) {
             $SESSION->attempts = null;
             $SESSION->mustattempt = null;
 
-            // Debug.
-            // var_dump($SESSION->timeout); echo "<br>";
-            // var_dump(date( 'm', $SESSION->lastactivity));
-
             echo $OUTPUT->header();
             echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
             echo html_writer::start_tag('br');
+
+            // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
+            echo $debugcode;
+
             $attributes = array("class" => "alert alert-warning");
             echo html_writer::tag('div', get_string('noattemptsleft','auth_twofactor', minutes($SESSION->timeout)), $attributes);
             echo $OUTPUT->continue_button($CFG->wwwroot);
@@ -194,9 +175,16 @@ if ($mform->is_cancelled()) {
 
 } else {
 
-    if (empty($messageid) && empty($needphone)) {
+    if (empty($messageid) && empty($needphone) && !$debug) {
+        $SESSION->attempts = null;
+        $SESSION->mustattempt = null;
         redirect($CFG->wwwroot);
-        die();
+    }
+
+    if ($debug && empty($code) && empty($needphone)) {
+        $SESSION->attempts = null;
+        $SESSION->mustattempt = null;
+        redirect($CFG->wwwroot);
     }
 
     // Display form the first time.
@@ -207,7 +195,11 @@ if ($mform->is_cancelled()) {
 
     // Let's setup this session to 1, just in case the user goes back to the login page
     // or access directly to the URL. This will help to redirect back to the confirm page.
-    $SESSION->mustattempt = 1;
+    if (!$needphone) {
+        $SESSION->mustattempt = 1;
+    }
+
+    $SESSION->fromurl      = null;
 
     // Let's carry over the messageid, to be able to redirect them to the confirm page
     // so they can continue using the code that was deliver to their phone to attempt.
@@ -224,6 +216,10 @@ if ($mform->is_cancelled()) {
     }
     echo $headingoutput;
     echo html_writer::start_tag('br');
+
+    // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
+    echo $debugcode;
+
     echo html_writer::start_tag('br');
 
     // ...else, display form.
@@ -246,6 +242,10 @@ function update_user_phone($phone, $user) {
 
     global $DB, $CFG;
 
+    if (isset($SESSION->mustattempt)) {
+        $SESSION->mustattempt = null;
+    }
+
     $user           = json_decode(base64_decode($user));
     $user->phone1   = $phone;
 
@@ -254,7 +254,7 @@ function update_user_phone($phone, $user) {
         die();
     }
 
-    redirect($CFG->wwwroot);
+    redirect('/login/index.php', get_string('phoneupdatesuccess', 'auth_twofactor'), 5, \core\output\notification::NOTIFY_SUCCESS);
 
 }
 
@@ -269,4 +269,36 @@ function minutes($seconds) {
     $minutes = floor(($seconds / 60) % 60);
     $seconds = $seconds % 60;
     return $hours > 0 ? "$hours hours, $minutes minutes" : ($minutes > 0 ? "$minutes minutes, $seconds seconds" : "$seconds seconds");
+}
+
+function check_timeout($istimeout) {
+
+    global $SESSION, $CFG, $OUTPUT;
+
+    if (empty($istimeout)) {
+        return;
+    }
+
+    // If the timeout expired, destroy the sessions and redirect to the login.
+    // They should be able to try again.
+    $remainingtime = $SESSION->timeout - (time() - $SESSION->lastactivity);
+    if (time() - $SESSION->lastactivity >= $SESSION->timeout) {
+
+        // Unset sessions.
+        $SESSION->lastactivity = null;
+        $SESSION->timeout = null;
+        redirect($CFG->wwwroot);
+
+    }
+
+    // Output page.
+    echo $OUTPUT->header();
+    echo $OUTPUT->heading(get_string('verification_page', 'auth_twofactor'));
+    echo html_writer::start_tag('br');
+    $attributes = array('class' => 'alert alert-warning');
+    echo html_writer::tag('div', get_string('noattemptsleft','auth_twofactor', minutes($remainingtime)), $attributes);
+    echo $OUTPUT->continue_button($CFG->wwwroot);
+    echo $OUTPUT->footer();
+    die();
+
 }

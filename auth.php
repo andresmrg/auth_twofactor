@@ -31,12 +31,18 @@ require_once("$CFG->dirroot/user/profile/lib.php");
 /**
  * Two Factor authentication plugin.
  *
- * @package    auth
- * @subpackage twofactor
+ * @package    auth_twofactor
  * @copyright  2018 onwards Andres Ramos <andres.ramos@lmsdoctor.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class auth_plugin_twofactor extends auth_plugin_base {
+
+    /**
+     * Constructor.
+     */
+    public function __construct() {
+        $this->authtype = 'twofactor';
+    }
 
     /**
      * Returns true if the username and password work and false if they are
@@ -47,6 +53,19 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @return bool Authentication success or failure.
      */
     function user_login($username, $password) {
+        global $CFG, $DB, $USER;
+        if (!$user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id))) {
+            return false;
+        }
+        if (!validate_internal_user_password($user, $password)) {
+            return false;
+        }
+        if ($password === 'changeme') {
+            // force the change - this is deprecated and it makes sense only for manual auth,
+            // because most other plugins can not change password easily or
+            // passwords are always specified by users
+            set_user_preference('auth_forcepasswordchange', true, $user->id);
+        }
         return true;
     }
 
@@ -77,10 +96,15 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
     function user_authenticated_hook(&$user, $username, $password) {
 
+        if (is_siteadmin($user)) {
+            return;
+        }
+
         // Get config values.
         $iprange        = get_config('auth_twofactor', 'iprange');
         $timeout        = get_config('auth_twofactor', 'timeout');
         $attempts       = get_config('auth_twofactor', 'attempts');
+        $debug          = get_config('auth_twofactor', 'debug');
 
         // Store ip in vars to compare them.
         $iprangelist    = $this->get_ips($iprange);
@@ -101,49 +125,32 @@ class auth_plugin_twofactor extends auth_plugin_base {
         }
 
         // Validate ip range.
-        if (!($ip <= $highip && $lowip <= $ip)) {
+        if (!($ip <= $highip && $lowip <= $ip) && !is_siteadmin()) {
 
             // Generate random number and send it to the user's phone.
             $randomcode = substr(str_shuffle(str_repeat('0123456789',5)),0,6);
 
-            // Send the random code to the user's phone.
-            $message    = $this->send_code_to_user($randomcode, $user);
-            $encode     = base64_encode($message->body); // THIS SHOULD BE DELETED
-
             // Send the user data, so we can authenticate it from the confirm page.
             $u          = base64_encode(json_encode($user));
-            $confirmurl = new moodle_url(
-                $confirmpage,
-                array(
-                    // 'ver' => $encode, // THIS SHOULD BE DELETED.
+
+            // Send the random code to the user's phone.
+            if (!$debug) {
+                $message    = $this->send_code_to_user($randomcode, $user);
+                $encode     = base64_encode($message->body); // THIS SHOULD BE DELETED
+                $urlparams  = array(
                     'mid' => $message->getId(),
-                    'u' => $u
-                )
-            );
+                    'u'   => $u
+                );
+            } else {
+                $encode    = base64_encode($randomcode);
+                $urlparams  = array(
+                    'ver' => $encode, // THIS SHOULD BE DELETED.
+                    'u'   => $u
+                );
+            }
 
-            redirect($confirmurl);
+            redirect( new moodle_url($confirmpage, $urlparams) );
 
-        }
-
-    }
-
-    function pre_loginpage_hook() {
-
-        global $SESSION;
-
-        // If the user needs to be verified, and he attempts to go back, redirect him to
-        // the verification page to make the attempts. It won't redirect if all attempts
-        // are consumed.
-        if (isset($SESSION->mustattempt)) {
-            $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
-            $url = new moodle_url('/auth/twofactor/confirm.php', $params);
-            redirect($url);
-        }
-
-        // Redirect the user if the timeout hasn't expired yet.
-        if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
-            $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
-            redirect($url);
         }
 
     }
@@ -158,13 +165,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
             $url = new moodle_url('/auth/twofactor/confirm.php', $params);
-            // redirect($url);
+            redirect($url);
         }
 
         // Redirect the user if the timeout hasn't expired yet.
         if ( isset($SESSION->timeout) && (time() - $SESSION->lastactivity < $SESSION->timeout)) {
             $url = new moodle_url('/auth/twofactor/confirm.php', array('timeout' => 'yes'));
-            // redirect($url);
+            redirect($url);
         }
 
     }

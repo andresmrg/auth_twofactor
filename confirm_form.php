@@ -60,7 +60,7 @@ class confirm_form extends moodleform {
         }
 
         // Action buttons.
-        $this->add_action_buttons(true, get_string('confirm'));
+        $this->add_action_buttons(false, get_string('confirm'));
     }
 
     function get_data(){

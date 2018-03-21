@@ -22,6 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['pluginname'] = 'Two factor authentication';
 $string['auth_twofactordescription'] = 'This method removes any way for users to create their own accounts.  All accounts must be manually created by the admin user.';
 $string['expiration'] = 'Enable password expiry';
 $string['expiration_desc'] = 'Allow passwords to expire after a specified time.';
@@ -29,21 +30,23 @@ $string['expiration_warning'] = 'Notification threshold';
 $string['expiration_warning_desc'] = 'Number of days before password expiry that a notification is issued.';
 $string['passwdexpiretime'] = 'Password duration';
 $string['passwdexpiretime_desc'] = 'Length of time for which a password is valid.';
-$string['pluginname'] = 'Two Factor Authentication';
 $string['passwdexpire_settings'] = 'Password expiry settings';
-$string['enter_verification'] = 'A verification code was sent to your phone, please enter the code here to continue.';
-$string['enter_phone'] = 'Your phone number is required in your profile.';
+$string['enter_verification'] = 'A verification code was sent to your cellphone, please enter the code here to continue.';
+$string['enter_phone'] = 'Your mobile phone number is required in your profile.';
 $string['verificationcode'] = 'Enter Verification Code';
 $string['incorrectcode'] = 'The verification code is not correct, you have {$a} attempts left.';
 $string['noattemptsleft'] = 'You have reached the maximum number of attempts. Please try to login again in {$a}.';
 $string['verification_page'] = 'Verification Page.';
-$string['phone'] = 'Phone Number';
+$string['phone'] = 'Mobile Phone Number';
 $string['phone_example'] = 'e.g. +313453039499';
 $string['wronglogin'] = 'Something wrong happened. Please report to an administrator if you see this message.';
-$string['phonenotupdated'] = 'Ups! Your cellphone number could not be updated. Please try again or contact an administrator.';
+$string['phonenotupdated'] = 'Ups! Your mobile phone number could not be updated. Please try again or contact an administrator.';
+$string['phoneupdatesuccess'] = 'Your mobile phone number was updated successfully';
+$string['debug'] = 'Enable debug option';
+$string['debug_desc'] = 'Don\'t enable on Production! This option is to test the verification code feature without sending the code to the user\'s mobile phone. You will be able to see the verification code in the page.';
 
 $string['auth_twofactor_ip_range'] = 'IP Range';
-$string['auth_twofactor_ip_range_desc'] = 'Put the range of IPs accepted to login. If the user is not within this range, a message with a code will be sent to his phone number.';
+$string['auth_twofactor_ip_range_desc'] = 'Put the range of IPs allowed to login. If the user is not within this range, a verification code will be sent to his/her mobile phone number through SMS.';
 
 $string['auth_twofactor_timeout'] = 'Timeout in seconds';
 $string['auth_twofactor_timeout_desc'] = 'Specify in seconds how long before the SMS code timeout.';
