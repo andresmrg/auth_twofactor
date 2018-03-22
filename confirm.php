@@ -271,6 +271,13 @@ function minutes($seconds) {
     return $hours > 0 ? "$hours hours, $minutes minutes" : ($minutes > 0 ? "$minutes minutes, $seconds seconds" : "$seconds seconds");
 }
 
+/**
+ * Validates if the timeout expires and display the validation page until
+ * the timeout is expired.
+ *
+ * @param  string $istimeout
+ * @return void
+ */
 function check_timeout($istimeout) {
 
     global $SESSION, $CFG, $OUTPUT;

@@ -79,6 +79,10 @@ class auth_plugin_twofactor extends auth_plugin_base {
         return explode('-', $iprange);
     }
 
+    /**
+     * Obtain the user's ip.
+     * @return int
+     */
     function get_real_ip_address() {
 
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) { // Check ip from share internet.
@@ -94,6 +98,14 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
     }
 
+    /**
+     * Post authentication hook.
+     * This method is called from authenticate_user_login() for all enabled auth plugins.
+     *
+     * @param object $user user object, later used for $USER
+     * @param string $username (with system magic quotes)
+     * @param string $password plain text password (with system magic quotes)
+     */
     function user_authenticated_hook(&$user, $username, $password) {
 
         if (is_siteadmin($user)) {
@@ -154,6 +166,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
     }
 
+    /**
+     * Hook for overriding behaviour of login page.
+     * This method is called from login/index.php page for all enabled auth plugins.
+     *
+     * @global object
+     * @global object
+     */
     function loginpage_hook() {
 
         global $SESSION;
