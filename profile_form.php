@@ -42,7 +42,7 @@ class profile_form extends moodleform {
         $mform->setType('phonenumber', PARAM_RAW);
 
         // Action buttons.
-        $this->add_action_buttons(false, get_string('profile'));
+        $this->add_action_buttons(false, get_string('confirm'));
     }
 
 }
