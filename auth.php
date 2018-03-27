@@ -126,13 +126,10 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         $u              = base64_encode(json_encode($user));
 
-        // Confirm page.
-        $confirmpage = '/auth/twofactor/confirm.php';
-
         // Validate if the user has any phone number, otherwise the user must add it.
-        $emptyphone = (empty($user->phone1) && empty($user->phone2) && !is_siteadmin());
+        $emptyphone = (empty($user->phone2) && empty($user->phone1) && !is_siteadmin());
         if ($emptyphone) {
-            $urltogo = new moodle_url($confirmpage, array('phone' => 1, 'u' => $u));
+            $urltogo = new moodle_url('/auth/twofactor/profile.php', array('u' => $u));
             redirect($urltogo);
         }
 
@@ -160,7 +157,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
                 );
             }
 
-            redirect( new moodle_url($confirmpage, $urlparams) );
+            redirect( new moodle_url('/auth/twofactor/confirm.php', $urlparams) );
 
         }
 
@@ -205,7 +202,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
         require 'vendor/autoload.php';
 
         // Try one of the phone numbers from their profile.
-        $phonenumber            = (!empty($user->phone1)) ? $user->phone1 : $user->phone2;
+        $phonenumber            = (!empty($user->phone2)) ? $user->phone2 : $user->phone1;
         $accesskey              = get_config('auth_twofactor', 'accesskey');
         $sender                 = get_config('auth_twofactor', 'sender');
 

@@ -36,7 +36,6 @@ $code      = optional_param('ver', "", PARAM_NOTAGS);
 $messageid = optional_param('mid', "", PARAM_NOTAGS);
 $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = optional_param('u', "", PARAM_NOTAGS);
-$needphone = optional_param('phone', 0, PARAM_INT);
 
 $debugcode = ( !empty($code) ) ? html_writer::tag('div', base64_decode($code), array("class" => "alert alert-success")) : "";
 
@@ -175,13 +174,13 @@ if ($mform->is_cancelled()) {
 
 } else {
 
-    if (empty($messageid) && empty($needphone) && !$debug) {
+    if (empty($messageid) && !$debug) {
         $SESSION->attempts = null;
         $SESSION->mustattempt = null;
         redirect($CFG->wwwroot);
     }
 
-    if ($debug && empty($code) && empty($needphone)) {
+    if ($debug && empty($code)) {
         $SESSION->attempts = null;
         $SESSION->mustattempt = null;
         redirect($CFG->wwwroot);
@@ -195,10 +194,7 @@ if ($mform->is_cancelled()) {
 
     // Let's setup this session to 1, just in case the user goes back to the login page
     // or access directly to the URL. This will help to redirect back to the confirm page.
-    if (!$needphone) {
-        $SESSION->mustattempt = 1;
-    }
-
+    $SESSION->mustattempt = 1;
     $SESSION->fromurl      = null;
 
     // Let's carry over the messageid, to be able to redirect them to the confirm page
@@ -209,12 +205,7 @@ if ($mform->is_cancelled()) {
     echo $OUTPUT->header();
 
     // Output is different for the phone and the verification code.
-    if (!empty($needphone)) {
-        $headingoutput = $OUTPUT->heading(get_string('enter_phone', 'auth_twofactor'));
-    } else {
-        $headingoutput = $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
-    }
-    echo $headingoutput;
+    echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
     echo html_writer::start_tag('br');
 
     // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
@@ -228,33 +219,6 @@ if ($mform->is_cancelled()) {
     $mform->display();
     echo $OUTPUT->footer();
     die();
-
-}
-
-/**
- * Update the user's phone number, and redirect to the main page again.
- *
- * @param  int    $phone
- * @param  string $user    User data comes enconded by default.
- * @return void
- */
-function update_user_phone($phone, $user) {
-
-    global $DB, $CFG;
-
-    if (isset($SESSION->mustattempt)) {
-        $SESSION->mustattempt = null;
-    }
-
-    $user           = json_decode(base64_decode($user));
-    $user->phone1   = $phone;
-
-    if (!$DB->update_record('user', $user)) {
-        echo get_string('phonenotupdated', 'auth_twofactor');
-        die();
-    }
-
-    redirect('/login/index.php', get_string('phoneupdatesuccess', 'auth_twofactor'), 5, \core\output\notification::NOTIFY_SUCCESS);
 
 }
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Generates the form to confirm a class
+ * Generates the form to update the phone number.
  *
  * @package     auth_twofactor
  * @author      Andres Ramos <andres.ramos@lmsdoctor.com>
@@ -25,7 +25,7 @@
 
 require_once("{$CFG->libdir}/formslib.php");
 
-class confirm_form extends moodleform {
+class profile_form extends moodleform {
 
     function definition() {
 
@@ -33,26 +33,16 @@ class confirm_form extends moodleform {
 
         $mform = & $this->_form;
 
-        // Hidden fields
-        $mform->addElement('hidden', 'ver');
-        $mform->setType('ver', PARAM_NOTAGS);
-
-        $mform->addElement('hidden', 'mid');
-        $mform->setType('mid', PARAM_NOTAGS);
-
         $mform->addElement('hidden', 'u');
         $mform->setType('u', PARAM_NOTAGS);
 
-        $mform->addElement('hidden', 'attempts');
-        $mform->setType('attempts', PARAM_INT);
-
-        // Input for confirmation message.
-        $mform->addElement('text','code', get_string('verificationcode', 'auth_twofactor'));
-        $mform->setType('code', PARAM_NOTAGS);
-        $mform->addRule('code', get_string('required'), 'required', null,  'server');
+        // Input to add the phone number.
+        $conditions = array('placeholder' => get_string('phone_example', 'auth_twofactor'));
+        $mform->addElement('text','phonenumber', get_string('phone', 'auth_twofactor'), $conditions);
+        $mform->setType('phonenumber', PARAM_RAW);
 
         // Action buttons.
-        $this->add_action_buttons(false, get_string('confirm'));
+        $this->add_action_buttons(false, get_string('profile'));
     }
 
 }
