@@ -108,7 +108,13 @@ class auth_plugin_twofactor extends auth_plugin_base {
      */
     function user_authenticated_hook(&$user, $username, $password) {
 
+        global $SESSION;
+
         if (is_siteadmin($user)) {
+            return;
+        }
+
+        if (isset($SESSION->justloggedin) && $SESSION->justloggedin) {
             return;
         }
 

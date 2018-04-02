@@ -96,6 +96,9 @@ if ($mform->is_cancelled()) {
     // Validate against the message code, if this is true, redirect.
     if ($comparison) {
 
+        // If the user login successfully, we can remove this session.
+        $SESSION->mustattempt = null;
+
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
 
@@ -118,6 +121,7 @@ if ($mform->is_cancelled()) {
             }
         }
 
+        // Redirect to the desired url.
         redirect($url);
 
     } else {
@@ -194,7 +198,12 @@ if ($mform->is_cancelled()) {
 
     // Let's setup this session to 1, just in case the user goes back to the login page
     // or access directly to the URL. This will help to redirect back to the confirm page.
-    $SESSION->mustattempt = 1;
+    if (isset($SESSION->justloggedin) && $SESSION->justloggedin) {
+        $SESSION->mustattempt = null;
+    } else {
+        $SESSION->mustattempt = 1;
+    }
+
     $SESSION->fromurl      = null;
 
     // Let's carry over the messageid, to be able to redirect them to the confirm page
