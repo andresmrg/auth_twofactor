@@ -82,7 +82,7 @@ function update_user_phone($phone, $user) {
     global $DB, $CFG;
 
     if (isset($SESSION->mustattempt)) {
-        $SESSION->mustattempt = null;
+        unset($SESSION->mustattempt);
     }
 
     $user           = json_decode(base64_decode($user));

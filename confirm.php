@@ -97,7 +97,7 @@ if ($mform->is_cancelled()) {
     if ($comparison) {
 
         // If the user login successfully, we can remove this session.
-        $SESSION->mustattempt = null;
+        unset($SESSION->mustattempt);
 
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
@@ -156,8 +156,8 @@ if ($mform->is_cancelled()) {
             $SESSION->lastactivity = time();
 
             // Unset attempts and mustattempt when the time starts counting.
-            $SESSION->attempts = null;
-            $SESSION->mustattempt = null;
+            unset($SESSION->attempts);
+            unset($SESSION->mustattempt);
 
             echo $OUTPUT->header();
             echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
@@ -179,14 +179,14 @@ if ($mform->is_cancelled()) {
 } else {
 
     if (empty($messageid) && !$debug) {
-        $SESSION->attempts = null;
-        $SESSION->mustattempt = null;
+        unset($SESSION->attempts);
+        unset($SESSION->mustattempt);
         redirect($CFG->wwwroot);
     }
 
     if ($debug && empty($code)) {
-        $SESSION->attempts = null;
-        $SESSION->mustattempt = null;
+        unset($SESSION->attempts);
+        unset($SESSION->mustattempt);
         redirect($CFG->wwwroot);
     }
 
@@ -199,12 +199,12 @@ if ($mform->is_cancelled()) {
     // Let's setup this session to 1, just in case the user goes back to the login page
     // or access directly to the URL. This will help to redirect back to the confirm page.
     if (isset($SESSION->justloggedin) && $SESSION->justloggedin) {
-        $SESSION->mustattempt = null;
+        unset($SESSION->mustattempt);
     } else {
         $SESSION->mustattempt = 1;
     }
 
-    $SESSION->fromurl      = null;
+    unset($SESSION->fromurl);
 
     // Let's carry over the messageid, to be able to redirect them to the confirm page
     // so they can continue using the code that was deliver to their phone to attempt.
@@ -265,8 +265,8 @@ function check_timeout($istimeout) {
     if (time() - $SESSION->lastactivity >= $SESSION->timeout) {
 
         // Unset sessions.
-        $SESSION->lastactivity = null;
-        $SESSION->timeout = null;
+        unset($SESSION->lastactivity);
+        unset($SESSION->timeout);
         redirect($CFG->wwwroot);
 
     }
