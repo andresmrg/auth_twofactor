@@ -38,7 +38,8 @@ defined('MOODLE_INTERNAL') || die();
  **/
 class message_sent extends \core\event\base {
     protected function init() {
-        $this->data['crud'] = 'c'; // c(reate), r(ead), u(pdate), d(elete)
+        // ...c(reate), r(ead), u(pdate), d(elete).
+        $this->data['crud'] = 'c';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
         $this->data['objecttable'] = 'auth_twofactor';
     }
@@ -52,7 +53,7 @@ class message_sent extends \core\event\base {
     }
 
     public function get_url() {
-        // return new \moodle_url('....', array('parameter' => 'value', ...));
+
     }
 
     public function get_legacy_logdata() {

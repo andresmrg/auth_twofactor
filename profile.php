@@ -25,7 +25,7 @@
 
 require_once('../../config.php');
 require_once('profile_form.php');
-require 'vendor/autoload.php';
+require('vendor/autoload.php');
 
 // Get url params.
 $u = optional_param('u', "", PARAM_NOTAGS);

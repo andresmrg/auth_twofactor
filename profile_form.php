@@ -23,11 +23,12 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
 require_once("{$CFG->libdir}/formslib.php");
 
 class profile_form extends moodleform {
 
-    function definition() {
+    public function definition() {
 
         global $DB;
 
@@ -38,7 +39,7 @@ class profile_form extends moodleform {
 
         // Input to add the phone number.
         $conditions = array('placeholder' => get_string('phone_example', 'auth_twofactor'));
-        $mform->addElement('text','phonenumber', get_string('phone', 'auth_twofactor'), $conditions);
+        $mform->addElement('text', 'phonenumber', get_string('phone', 'auth_twofactor'), $conditions);
         $mform->setType('phonenumber', PARAM_RAW);
 
         // Action buttons.

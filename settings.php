@@ -29,7 +29,8 @@ $settings->add(new admin_setting_configcheckbox('auth_twofactor/debug',
         new lang_string('debug', 'auth_twofactor'), new lang_string('debug_desc', 'auth_twofactor'), 0));
 
 // Introductory explanation.
-$settings->add(new admin_setting_heading('auth_twofactor/pluginname', '', new lang_string('auth_twofactordescription', 'auth_twofactor')));
+$settings->add(new admin_setting_heading('auth_twofactor/pluginname', '',
+    new lang_string('auth_twofactordescription', 'auth_twofactor')));
 
 // Access key.
 $settings->add(new admin_setting_configtext('auth_twofactor/accesskey', get_string('auth_twofactor_accesskey', 'auth_twofactor'),

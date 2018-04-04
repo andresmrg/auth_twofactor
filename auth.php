@@ -52,18 +52,18 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param string $password The password
      * @return bool Authentication success or failure.
      */
-    function user_login($username, $password) {
+    public function user_login($username, $password) {
         global $CFG, $DB, $USER;
-        if (!$user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id))) {
+        if (!$user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id))) {
             return false;
         }
         if (!validate_internal_user_password($user, $password)) {
             return false;
         }
         if ($password === 'changeme') {
-            // force the change - this is deprecated and it makes sense only for manual auth,
+            // Force the change - this is deprecated and it makes sense only for manual auth,
             // because most other plugins can not change password easily or
-            // passwords are always specified by users
+            // passwords are always specified by users.
             set_user_preference('auth_forcepasswordchange', true, $user->id);
         }
         return true;
@@ -75,7 +75,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param  string $iprange
      * @return array
      */
-    function get_ips($iprange) {
+    protected function get_ips($iprange) {
         return explode('-', $iprange);
     }
 
@@ -83,12 +83,11 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * Obtain the user's ip.
      * @return int
      */
-    function get_real_ip_address() {
+    protected function get_real_ip_address() {
 
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) { // Check ip from share internet.
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) { // ...Check ip from share internet.
             $ip = $_SERVER['HTTP_CLIENT_IP'];
-        }
-        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) { // To check ip is pass from proxy.
+        } else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) { // ...To check ip is pass from proxy.
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
         } else {
             $ip = $_SERVER['REMOTE_ADDR'];
@@ -106,7 +105,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param string $username (with system magic quotes)
      * @param string $password plain text password (with system magic quotes)
      */
-    function user_authenticated_hook(&$user, $username, $password) {
+    public function user_authenticated_hook(&$user, $username, $password) {
 
         global $SESSION;
 
@@ -143,7 +142,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
         if (!($ip <= $highip && $lowip <= $ip) && !is_siteadmin()) {
 
             // Generate random number and send it to the user's phone.
-            $randomcode = substr(str_shuffle(str_repeat('0123456789',5)),0,6);
+            $randomcode = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 6);
 
             // Send the user data, so we can authenticate it from the confirm page.
             $u          = base64_encode(json_encode($user));
@@ -176,7 +175,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @global object
      * @global object
      */
-    function loginpage_hook() {
+    public function loginpage_hook() {
 
         global $SESSION;
 
@@ -203,21 +202,21 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param  int    $randomcode
      * @return mixed               Returns object if the message was deliver, false otherwise.
      */
-    function send_code_to_user($randomcode, $user) {
+    protected function send_code_to_user($randomcode, $user) {
 
-        require 'vendor/autoload.php';
+        require('vendor/autoload.php');
 
         // Try one of the phone numbers from their profile.
         $phonenumber            = (!empty($user->phone2)) ? $user->phone2 : $user->phone1;
         $accesskey              = get_config('auth_twofactor', 'accesskey');
         $sender                 = get_config('auth_twofactor', 'sender');
 
-        $MessageBird            = new \MessageBird\Client($accesskey);
-        $Message                = new \MessageBird\Objects\Message();
-        $Message->originator    = $sender;
-        $Message->recipients    = array($phonenumber);
-        $Message->body          = $randomcode;
-        $result                 = $MessageBird->messages->create($Message);
+        $messagebird            = new \MessageBird\Client($accesskey);
+        $message                = new \MessageBird\Objects\Message();
+        $message->originator    = $sender;
+        $message->recipients    = array($phonenumber);
+        $message->body          = $randomcode;
+        $result                 = $messagebird->messages->create($message);
 
         if (!empty($result)) {
             $event = \auth_twofactor\event\message_sent::create(array(

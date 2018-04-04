@@ -25,7 +25,7 @@
 
 require_once('../../config.php');
 require_once('confirm_form.php');
-require 'vendor/autoload.php';
+require('vendor/autoload.php');
 
 // Get configs.
 $accesskey = get_config('auth_twofactor', 'accesskey');
@@ -71,16 +71,16 @@ if ($mform->is_cancelled()) {
     if (!$debug) {
 
         // Get the message content.
-        $MessageBird = new \MessageBird\Client($accesskey);
+        $messagebird = new \MessageBird\Client($accesskey);
         $comparison  = false;
 
         try {
-            $MessageResult = $MessageBird->messages->read($fromform->mid); // Set a message id here
-            $comparison = ($MessageResult->body == $fromform->code);
+            $messageresult = $messagebird->messages->read($fromform->mid); // ...Set a message id here.
+            $comparison = ($messageresult->body == $fromform->code);
         } catch (\MessageBird\Exceptions\AuthenticateException $e) {
-            // That means that your accessKey is unknown
+            // That means that your accessKey is unknown.
             $attributes = array("class" => "alert alert-warning");
-            echo html_writer::tag('div', get_string('wronglogin','auth_twofactor'), $attributes);
+            echo html_writer::tag('div', get_string('wronglogin', 'auth_twofactor'), $attributes);
         } catch (\Exception $e) {
 
             if ($debug) {
@@ -109,7 +109,7 @@ if ($mform->is_cancelled()) {
         if ($user) {
             complete_user_login($user);
 
-            // Redirection
+            // Redirection.
             if (user_not_fully_set_up($USER, true)) {
                 $urltogo = $CFG->wwwroot.'/user/edit.php';
                 redirect($urltogo);
@@ -129,7 +129,6 @@ if ($mform->is_cancelled()) {
         // The user has until X attempts to submit the form, before the timeout start counting.
         // He already did the first attempt so we must decrease the attempts.
         $attempts = !empty($SESSION->attempts) ? --$SESSION->attempts : $fromform->attempts;
-        // var_dump($attempts);
 
         if ($attempts !== 0) {
 
@@ -137,11 +136,10 @@ if ($mform->is_cancelled()) {
             echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
             echo html_writer::start_tag('br');
 
-            // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
             echo $debugcode;
 
             $attributes = array("class" => "alert alert-warning");
-            echo html_writer::tag('div', get_string('incorrectcode','auth_twofactor', $attempts), $attributes);
+            echo html_writer::tag('div', get_string('incorrectcode', 'auth_twofactor', $attempts), $attributes);
             echo html_writer::start_tag('br');
 
             $SESSION->attempts = $attempts;
@@ -167,7 +165,7 @@ if ($mform->is_cancelled()) {
             echo $debugcode;
 
             $attributes = array("class" => "alert alert-warning");
-            echo html_writer::tag('div', get_string('noattemptsleft','auth_twofactor', minutes($SESSION->timeout)), $attributes);
+            echo html_writer::tag('div', get_string('noattemptsleft', 'auth_twofactor', minutes($SESSION->timeout)), $attributes);
             echo $OUTPUT->continue_button($CFG->wwwroot);
             echo $OUTPUT->footer();
             die();
@@ -276,7 +274,7 @@ function check_timeout($istimeout) {
     echo $OUTPUT->heading(get_string('verification_page', 'auth_twofactor'));
     echo html_writer::start_tag('br');
     $attributes = array('class' => 'alert alert-warning');
-    echo html_writer::tag('div', get_string('noattemptsleft','auth_twofactor', minutes($remainingtime)), $attributes);
+    echo html_writer::tag('div', get_string('noattemptsleft', 'auth_twofactor', minutes($remainingtime)), $attributes);
     echo $OUTPUT->continue_button($CFG->wwwroot);
     echo $OUTPUT->footer();
     die();

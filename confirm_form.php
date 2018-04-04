@@ -23,17 +23,18 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
 require_once("{$CFG->libdir}/formslib.php");
 
 class confirm_form extends moodleform {
 
-    function definition() {
+    public function definition() {
 
         global $DB;
 
         $mform = & $this->_form;
 
-        // Hidden fields
+        // Hidden fields.
         $mform->addElement('hidden', 'ver');
         $mform->setType('ver', PARAM_NOTAGS);
 
@@ -47,7 +48,7 @@ class confirm_form extends moodleform {
         $mform->setType('attempts', PARAM_INT);
 
         // Input for confirmation message.
-        $mform->addElement('text','code', get_string('verificationcode', 'auth_twofactor'));
+        $mform->addElement('text', 'code', get_string('verificationcode', 'auth_twofactor'));
         $mform->setType('code', PARAM_NOTAGS);
         $mform->addRule('code', get_string('required'), 'required', null,  'server');
 
