@@ -28,8 +28,9 @@ require_once('confirm_form.php');
 require('vendor/autoload.php');
 
 // Get configs.
-$accesskey = get_config('auth_twofactor', 'accesskey');
-$debug     = get_config('auth_twofactor', 'debug');
+$accesskey         = get_config('auth_twofactor', 'accesskey');
+$debug             = get_config('auth_twofactor', 'debug');
+$SESSION->timespan = get_config('auth_twofactor', 'timespan');
 
 // Get url params.
 $code      = optional_param('ver', "", PARAM_NOTAGS);
@@ -48,6 +49,8 @@ $PAGE->set_pagelayout('popup');
 $PAGE->set_url(new moodle_url('/auth/twofactor/confirm.php'));
 $PAGE->set_title(get_string('verificationcode', 'auth_twofactor'));
 $PAGE->set_heading(get_string('verificationcode', 'auth_twofactor'));
+
+check_timespan();
 
 // If the timeout time passed, then take the user to the home page.
 check_timeout($istimeout);
@@ -190,8 +193,8 @@ if ($mform->is_cancelled()) {
         redirect($CFG->wwwroot);
     }
 
-    // Display form the first time.
-    $configattempts        = get_config('auth_twofactor', 'attempts');
+    // Activity time will help to validate the time for the timespan.
+    $SESSION->timespan_lastactivity = time();
 
     // Attempts are set to 0 the first time.
     $SESSION->attempts     = 0;
@@ -210,6 +213,7 @@ if ($mform->is_cancelled()) {
     // so they can continue using the code that was deliver to their phone to attempt.
     $SESSION->mid         = $messageid;
     $SESSION->ver         = $code;
+    $timespan             = $SESSION->timespan;
 
     echo $OUTPUT->header();
 
@@ -219,6 +223,7 @@ if ($mform->is_cancelled()) {
 
     // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
     echo $debugcode;
+    echo ( !empty($timespan) ) ? html_writer::tag('div', get_string('validduringtimespan', 'auth_twofactor', minutes($timespan)), array("class" => "alert alert-warning")) : "";
 
     echo html_writer::start_tag('br');
 
@@ -279,5 +284,33 @@ function check_timeout($istimeout) {
     echo $OUTPUT->continue_button($CFG->wwwroot);
     echo $OUTPUT->footer();
     die();
+
+}
+
+/**
+ * This function makes sure that the verification code is only valid
+ * for X amount of time.
+ *
+ * @return void
+ */
+function check_timespan() {
+
+    global $SESSION, $CFG;
+
+    $timespan = get_config('auth_twofactor', 'timespan');
+
+    if (empty($timespan) || empty($SESSION->timespan_lastactivity)) {
+        return;
+    }
+
+    if (time() - $SESSION->timespan_lastactivity >= $SESSION->timespan) {
+        // Unset sessions.
+        unset($SESSION->timespan_lastactivity);
+        unset($SESSION->timespan);
+        unset($SESSION->lastactivity);
+        unset($SESSION->timeout);
+        unset($SESSION->mustattempt);
+        redirect($CFG->wwwroot);
+    }
 
 }

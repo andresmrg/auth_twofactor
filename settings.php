@@ -51,3 +51,7 @@ $settings->add(new admin_setting_configtext('auth_twofactor/timeout', get_string
 // Number of attempts.
 $settings->add(new admin_setting_configtext('auth_twofactor/attempts', get_string('auth_twofactor_attempts', 'auth_twofactor'),
         get_string('auth_twofactor_attempts_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
+
+// Timeout in seconds.
+$settings->add(new admin_setting_configtext('auth_twofactor/timespan', get_string('auth_twofactor_timespan', 'auth_twofactor'),
+        get_string('auth_twofactor_timespan_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
