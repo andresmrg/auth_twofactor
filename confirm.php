@@ -126,9 +126,11 @@ if ($mform->is_cancelled()) {
 
     } else {
 
+        $configattempts = get_config('auth_twofactor', 'attempts');
+
         // The user has until X attempts to submit the form, before the timeout start counting.
         // He already did the first attempt so we must decrease the attempts.
-        $attempts = !empty($SESSION->attempts) ? --$SESSION->attempts : $fromform->attempts;
+        $attempts = !empty($SESSION->attempts) ? --$SESSION->attempts : $configattempts;
 
         if ($attempts !== 0) {
 
@@ -221,7 +223,6 @@ if ($mform->is_cancelled()) {
     echo html_writer::start_tag('br');
 
     // ...else, display form.
-    $toform['attempts'] = $configattempts;
     $mform->set_data($toform);
     $mform->display();
     echo $OUTPUT->footer();

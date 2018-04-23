@@ -44,9 +44,6 @@ class confirm_form extends moodleform {
         $mform->addElement('hidden', 'u');
         $mform->setType('u', PARAM_NOTAGS);
 
-        $mform->addElement('hidden', 'attempts');
-        $mform->setType('attempts', PARAM_INT);
-
         // Input for confirmation message.
         $mform->addElement('text', 'code', get_string('verificationcode', 'auth_twofactor'));
         $mform->setType('code', PARAM_NOTAGS);
