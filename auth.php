@@ -125,12 +125,12 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         // Store ip in vars to compare them.
         $ip             = ip2long($this->get_real_ip_address());
-        $u              = base64_encode(json_encode($user));
+        $SESSION->u     = base64_encode(json_encode($user));
 
         // Validate if the user has any phone number, otherwise the user must add it.
         $emptyphone = (empty($user->phone2) && empty($user->phone1) && !is_siteadmin());
         if ($emptyphone) {
-            $urltogo = new moodle_url('/auth/twofactor/profile.php', array('u' => $u));
+            $urltogo = new moodle_url('/auth/twofactor/profile.php');
             redirect($urltogo);
         }
 
@@ -140,21 +140,16 @@ class auth_plugin_twofactor extends auth_plugin_base {
             // Generate random number and send it to the user's phone.
             $randomcode = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 6);
 
-            // Send the user data, so we can authenticate it from the confirm page.
-            $u          = base64_encode(json_encode($user));
-
             // Send the random code to the user's phone.
             if (!$debug) {
                 $message    = $this->send_code_to_user($randomcode, $user);
                 $urlparams  = array(
-                    'mid' => $message->getId(),
-                    'u'   => $u
+                    'mid' => $message->getId()
                 );
             } else {
                 $encode    = base64_encode($randomcode);
                 $urlparams  = array(
-                    'ver' => $encode, // THIS SHOULD BE DELETED.
-                    'u'   => $u
+                    'ver' => $encode
                 );
             }
 

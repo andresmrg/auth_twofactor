@@ -27,10 +27,10 @@ require_once('../../config.php');
 require_once('profile_form.php');
 require('vendor/autoload.php');
 
-// Get url params.
-$u = optional_param('u', "", PARAM_NOTAGS);
-
 global $DB, $OUTPUT, $PAGE, $USER, $CFG, $SESSION;
+
+// Get url params.
+$u = $SESSION->u;
 
 // Set page layout and headings.
 $context = context_system::instance();

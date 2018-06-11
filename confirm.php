@@ -36,7 +36,7 @@ $SESSION->timespan = get_config('auth_twofactor', 'timespan');
 $code      = optional_param('ver', "", PARAM_NOTAGS);
 $messageid = optional_param('mid', "", PARAM_NOTAGS);
 $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
-$u         = optional_param('u', "", PARAM_NOTAGS);
+$u         = $SESSION->u;
 
 $debugcode = ( !empty($code) ) ? html_writer::tag('div', base64_decode($code), array("class" => "alert alert-success")) : "";
 
