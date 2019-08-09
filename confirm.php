@@ -34,9 +34,10 @@ $SESSION->timespan = get_config('auth_twofactor', 'timespan');
 
 // Get url params.
 $code      = optional_param('ver', "", PARAM_NOTAGS);
-$messageid = optional_param('mid', "", PARAM_NOTAGS);
 $istimeout = optional_param('timeout', 0, PARAM_NOTAGS);
 $u         = $SESSION->u;
+$secret    = $SESSION->s;
+$messageid = $SESSION->mid;
 
 $debugcode = ( !empty($code) ) ? html_writer::tag('div', base64_decode($code), array("class" => "alert alert-success")) : "";
 
@@ -60,10 +61,14 @@ $toform = array(
     'mid'       => $messageid,
     'ver'       => $code,
     'u'         => $u,
+    'secret'    => $secret
 );
 
 // If the form is cancel, return.
 if ($mform->is_cancelled()) {
+    unset($SESSION->mustattempt);
+    unset($SESSION->s);
+    unset($SESSION->mid);
     redirect($CFG->wwwroot);
 } else if ($fromform = $mform->get_data()) {
 
@@ -71,7 +76,12 @@ if ($mform->is_cancelled()) {
         update_user_phone($fromform->phonenumber, $fromform->u);
     }
 
-    if (!$debug) {
+    // Validation when using the email option.
+    if (!empty($fromform->secret)) {
+        $comparison = (base64_decode($fromform->secret) == $fromform->code);
+    }
+
+    if (!$debug && empty($fromform->secret)) {
 
         // Get the message content.
         $messagebird = new \MessageBird\Client($accesskey);
@@ -92,8 +102,8 @@ if ($mform->is_cancelled()) {
 
         }
 
-    } else {
-        $comparison = (base64_decode($fromform->ver) == $fromform->code);
+    } else if ($debug) {
+        $comparison = (base64_decode($fromform->s) == $fromform->code);
     }
 
     // Validate against the message code, if this is true, redirect.
@@ -101,6 +111,8 @@ if ($mform->is_cancelled()) {
 
         // If the user login successfully, we can remove this session.
         unset($SESSION->mustattempt);
+        unset($SESSION->s);
+        unset($SESSION->mid);
 
         // Get the user object.
         $user = json_decode(base64_decode($fromform->u));
@@ -138,7 +150,11 @@ if ($mform->is_cancelled()) {
         if ($attempts !== 0) {
 
             echo $OUTPUT->header();
-            echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
+            if (!empty($secret)) {
+                echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Email'));
+            } else if (!empty($messageid)) {
+                echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Mobile'));
+            }
             echo html_writer::start_tag('br');
 
             echo $debugcode;
@@ -163,7 +179,11 @@ if ($mform->is_cancelled()) {
             unset($SESSION->mustattempt);
 
             echo $OUTPUT->header();
-            echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
+            if (!empty($secret)) {
+                echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Email'));
+            } else if (!empty($messageid)) {
+                echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Mobile'));
+            }
             echo html_writer::start_tag('br');
 
             // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.
@@ -181,13 +201,11 @@ if ($mform->is_cancelled()) {
 
 } else {
 
-    if (empty($messageid) && !$debug) {
+    if ((empty($messageid) && empty($secret)) && !$debug) {
         unset($SESSION->attempts);
         unset($SESSION->mustattempt);
         redirect($CFG->wwwroot);
-    }
-
-    if ($debug && empty($code)) {
+    } else if ($debug && empty($code)) {
         unset($SESSION->attempts);
         unset($SESSION->mustattempt);
         redirect($CFG->wwwroot);
@@ -218,7 +236,11 @@ if ($mform->is_cancelled()) {
     echo $OUTPUT->header();
 
     // Output is different for the phone and the verification code.
-    echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor'));
+    if (!empty($secret)) {
+        echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Email'));
+    } else if (!empty($messageid)) {
+        echo $OUTPUT->heading(get_string('enter_verification', 'auth_twofactor', 'Mobile'));
+    }
     echo html_writer::start_tag('br');
 
     // DELETE THE FOLLOWING TWO LINES, THIS IS ONLY FOR TESTING PURPOSES.

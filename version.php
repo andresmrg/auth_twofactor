@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018061000;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2019080900;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2016120505;        // Requires this Moodle version.
+$plugin->release   = 'v1.0';
+$plugin->maturity  = MATURITY_STABLE; // This is considered as ready for production sites.
 $plugin->component = 'auth_twofactor';     // Full name of the plugin (used for diagnostics).

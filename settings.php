@@ -29,20 +29,55 @@ $settings->add(new admin_setting_configcheckbox('auth_twofactor/debug',
         new lang_string('debug', 'auth_twofactor'), new lang_string('debug_desc', 'auth_twofactor'), 0));
 
 // Introductory explanation.
-$settings->add(new admin_setting_heading('auth_twofactor/pluginname', '',
-    new lang_string('auth_twofactordescription', 'auth_twofactor')));
+$settings->add(
+    new admin_setting_heading(
+        'auth_twofactor/pluginname',
+        get_string('methodlist', 'auth_twofactor'),
+        get_string('messagebirdnote', 'auth_twofactor')
+    )
+);
 
 // Access key.
-$settings->add(new admin_setting_configtext('auth_twofactor/accesskey', get_string('auth_twofactor_accesskey', 'auth_twofactor'),
-        get_string('auth_twofactor_accesskey_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
+$settings->add(
+    new admin_setting_configselect(
+        'auth_twofactor/method',
+        get_string('auth_twofactor_method', 'auth_twofactor'),
+        get_string('auth_twofactor_method_desc', 'auth_twofactor'),
+        0,
+        array(
+            'email'       => 'Email',
+            'messagebird' => 'SMS (MessageBird)'
+        )
+    )
+);
+
+// Access key.
+$settings->add(
+    new admin_setting_configtext(
+        'auth_twofactor/accesskey',
+        get_string('auth_twofactor_accesskey', 'auth_twofactor'),
+        get_string('auth_twofactor_accesskey_desc', 'auth_twofactor'), '',
+        PARAM_RAW_TRIMMED
+    )
+);
 
 // Originator.
-$settings->add(new admin_setting_configtext('auth_twofactor/sender', get_string('auth_twofactor_sender', 'auth_twofactor'),
-        get_string('auth_twofactor_sender_desc', 'auth_twofactor'), '', PARAM_RAW));
+$settings->add(
+    new admin_setting_configtext(
+        'auth_twofactor/sender',
+        get_string('auth_twofactor_sender', 'auth_twofactor'),
+        get_string('auth_twofactor_sender_desc', 'auth_twofactor'), '',
+        PARAM_RAW
+    )
+);
 
 // IP Range.
-$settings->add(new admin_setting_configtext('auth_twofactor/iprange', get_string('auth_twofactor_ip_range', 'auth_twofactor'),
-        get_string('auth_twofactor_ip_range_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
+// $settings->add(new admin_setting_configtext('auth_twofactor/iprange', get_string('auth_twofactor_ip_range', 'auth_twofactor'),
+//         get_string('auth_twofactor_ip_range_desc', 'auth_twofactor'), '', PARAM_RAW_TRIMMED));
+
+// Introductory explanation.
+$settings->add(new admin_setting_heading('auth_twofactor/headingverification', 'Verification Settings',
+    ''));
 
 // Timeout in seconds.
 $settings->add(new admin_setting_configtext('auth_twofactor/timeout', get_string('auth_twofactor_timeout', 'auth_twofactor'),

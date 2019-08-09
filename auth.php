@@ -109,53 +109,68 @@ class auth_plugin_twofactor extends auth_plugin_base {
 
         global $SESSION;
 
-        if (is_siteadmin($user)) {
+        if (is_siteadmin($user) || (isset($SESSION->justloggedin) && $SESSION->justloggedin)) {
             return;
         }
-
-        if (isset($SESSION->justloggedin) && $SESSION->justloggedin) {
-            return;
-        }
-
-        // Get config values.
-        $iprange        = get_config('auth_twofactor', 'iprange');
-        $timeout        = get_config('auth_twofactor', 'timeout');
-        $attempts       = get_config('auth_twofactor', 'attempts');
-        $debug          = get_config('auth_twofactor', 'debug');
 
         // Store ip in vars to compare them.
         $ip             = ip2long($this->get_real_ip_address());
         $SESSION->u     = base64_encode(json_encode($user));
 
-        // Validate if the user has any phone number, otherwise the user must add it.
-        $emptyphone = (empty($user->phone2) && empty($user->phone1) && !is_siteadmin());
-        if ($emptyphone) {
-            $urltogo = new moodle_url('/auth/twofactor/profile.php');
-            redirect($urltogo);
-        }
+        // Generate random number and send it to the user's phone.
+        $randomcode = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 6);
 
-        // Validate ip range.
-        if (!(self::ip_in_range($ip, $iprange)) && !is_siteadmin()) {
 
-            // Generate random number and send it to the user's phone.
-            $randomcode = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 6);
 
-            // Send the random code to the user's phone.
-            if (!$debug) {
-                $message    = $this->send_code_to_user($randomcode, $user);
-                $urlparams  = array(
-                    'mid' => $message->getId()
-                );
-            } else {
-                $encode    = base64_encode($randomcode);
-                $urlparams  = array(
-                    'ver' => $encode
-                );
+        // Send the random code to the user's phone.
+        $options = $this->auth_twofactor_get_config_options();
+        if (!$options->debug && (isset($options->sendmethod) && $options->sendmethod == 'messagebird')) {
+
+            // Validate if the user has any phone number, otherwise the user must add it.
+            $emptyphone = (empty($user->phone2) && empty($user->phone1) && !is_siteadmin());
+            if ($emptyphone) {
+                $urltogo = new moodle_url('/auth/twofactor/profile.php');
+                redirect($urltogo);
             }
 
-            redirect( new moodle_url('/auth/twofactor/confirm.php', $urlparams) );
+            $message      = $this->auth_twofactor_sendsms($randomcode, $user);
+            $SESSION->mid = $message->getId();
 
+            redirect( new moodle_url('/auth/twofactor/confirm.php') );
+
+        } else if (!$options->debug && (isset($options->sendmethod) && $options->sendmethod == 'email')) {
+
+            $r          = $this->auth_twofactor_sendemail($randomcode, $user);
+            $encode     = base64_encode($randomcode);
+            $SESSION->s = $encode;
+
+            if ($r) {
+                redirect( new moodle_url('/auth/twofactor/confirm.php') );
+            }
+
+        } else {
+            $encode    = base64_encode($randomcode);
+            $urlparams  = array(
+                'ver' => $encode
+            );
+
+            redirect( new moodle_url('/auth/twofactor/confirm.php', $urlparams) );
         }
+
+        redirect( $CFG->wwwroot );
+
+    }
+
+    public function auth_twofactor_get_config_options() {
+
+        $c              = new stdClass;
+        $c->iprange     = get_config('auth_twofactor', 'iprange');
+        $c->timeout     = get_config('auth_twofactor', 'timeout');
+        $c->attempts    = get_config('auth_twofactor', 'attempts');
+        $c->debug       = get_config('auth_twofactor', 'debug');
+        $c->sendmethod  = get_config('auth_twofactor', 'method');
+
+        return $c;
 
     }
 
@@ -175,7 +190,7 @@ class auth_plugin_twofactor extends auth_plugin_base {
         // are consumed.
         if (isset($SESSION->mustattempt)) {
             $params = array('mid' => $SESSION->mid, 'ver' => $SESSION->ver);
-            $url = new moodle_url('/auth/twofactor/confirm.php', $params);
+            $url = new moodle_url('/auth/twofactor/confirm.php');
             redirect($url);
         }
 
@@ -193,7 +208,47 @@ class auth_plugin_twofactor extends auth_plugin_base {
      * @param  int    $randomcode
      * @return mixed               Returns object if the message was deliver, false otherwise.
      */
-    protected function send_code_to_user($randomcode, $user) {
+    protected function auth_twofactor_sendemail($randomcode, $user) {
+
+        global $USER;
+
+        $message = new \core\message\message();
+        $message->component = 'moodle';
+        $message->name = 'notices';
+        $message->userfrom = 2;
+        $message->userto = $user;
+        $message->subject = get_string('verificationcode', 'auth_twofactor');
+        $message->fullmessage = get_string('emailmessage', 'auth_twofactor', $randomcode);
+        $message->fullmessageformat = FORMAT_MARKDOWN;
+        $message->fullmessagehtml = '<p>' . get_string('emailmessage', 'auth_twofactor', $randomcode) . '</p>';
+        $message->smallmessage = $randomcode;
+        $message->notification = 1;
+        $message->replyto = "info@lmsdoctor.com";
+        $message->courseid = 1;
+        $messageid = message_send($message);
+
+        // Improve login into events for email.
+        // if (!empty($result)) {
+        //     $event = \auth_twofactor\event\message_sent::create(array(
+        //         'objectid'      => $randomcode,
+        //         'relateduserid' => $user->id,
+        //         'userid'        => $user->id,
+        //         'context'       => context_system::instance()
+        //     ));
+        //     $event->trigger();
+        // }
+
+        return $messageid;
+
+    }
+
+    /**
+     * Sends the verification code to the user.
+     *
+     * @param  int    $randomcode
+     * @return mixed               Returns object if the message was deliver, false otherwise.
+     */
+    protected function auth_twofactor_sendsms($randomcode, $user) {
 
         require('vendor/autoload.php');
 

@@ -44,13 +44,16 @@ class confirm_form extends moodleform {
         $mform->addElement('hidden', 'u');
         $mform->setType('u', PARAM_NOTAGS);
 
+        $mform->addElement('hidden', 'secret');
+        $mform->setType('secret', PARAM_NOTAGS);
+
         // Input for confirmation message.
         $mform->addElement('text', 'code', get_string('verificationcode', 'auth_twofactor'));
         $mform->setType('code', PARAM_NOTAGS);
         $mform->addRule('code', get_string('required'), 'required', null,  'server');
 
         // Action buttons.
-        $this->add_action_buttons(false, get_string('confirm'));
+        $this->add_action_buttons(true, get_string('confirm'));
     }
 
 }
